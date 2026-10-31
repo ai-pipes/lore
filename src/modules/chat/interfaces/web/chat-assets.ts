@@ -966,7 +966,9 @@ marked.use({ breaks: true });
    %%{init}%% directives cannot change them (they are also stripped before rendering). */
 mermaid.initialize({
   startOnLoad: false, theme: 'dark', securityLevel: 'strict', htmlLabels: false, flowchart: { htmlLabels: false },
-  secure: ['secure', 'securityLevel', 'startOnLoad', 'maxTextSize', 'theme', 'themeCSS', 'themeVariables', 'fontFamily', 'altFontFamily', 'darkMode', 'htmlLabels', 'flowchart', 'dompurifyConfig'],
+  /* mermaid 12 defaults to the ELK layout and a new look; keep the dagre layout the styles are made for */
+  layout: 'dagre', look: 'classic',
+  secure: ['secure', 'securityLevel', 'startOnLoad', 'maxTextSize', 'theme', 'themeCSS', 'themeVariables', 'fontFamily', 'altFontFamily', 'darkMode', 'htmlLabels', 'flowchart', 'dompurifyConfig', 'layout', 'look'],
 });
 
 function openMermaidOverlay(svgEl) {
