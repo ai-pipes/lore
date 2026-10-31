@@ -35,7 +35,7 @@
     "fastify": "^5.2.1",
     "gray-matter": "^4.0.3",
     "mermaid": "^11.17.2",
-    "openai": "^6.33.0",
+    "openai": "^7.47.0",
     "openid-client": "^6.8.8",
     "postgres": "^3.4.9"
   },
