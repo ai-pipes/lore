@@ -7,3 +7,5 @@ dist
 .DS_Store
 .idea
 coverage
+docs/media
+examples/showcase/out
