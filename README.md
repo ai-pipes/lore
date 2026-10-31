@@ -2,6 +2,10 @@
 
 Living documentation for your services. Every service pushes per-endpoint Markdown docs from CI on each merge; Lore keeps every version, diffs them, and answers questions across all services — in a browser chat that cites its sources, and over MCP for AI agents.
 
+[![Lore demo: a question answered across services with cited documents, a mermaid diagram, a runbook scoped to one service, and publishing the chat as an Insight](docs/media/lore-demo.gif)](docs/media/lore-demo.mp4)
+
+<sub>Demo at 2× speed, LLM waits cut ([full video, 2 min](docs/media/lore-demo.mp4)). Recorded on the [Parcelly showcase](examples/showcase/) with a local 7B model on Ollama.</sub>
+
 **The problem it solves.** Hand-written docs drift from the code, and the knowledge you need ("what happens after an order is placed?") is spread across several services. With Lore the docs are rebuilt from the code on every merge (by your own generator, or the example one in this repo), so they describe what is actually deployed, and one question can be answered from the docs of every service involved — with a link to each document it used.
 
 **Who it is for.** Teams with several services who want searchable, versioned, AI-readable reference docs inside their own network. It is a single Node.js process plus Postgres (pgvector). It is **not** a docs website generator or a wiki: there is no editor. Every reader signs in (see [Security](#security)).
@@ -79,6 +83,8 @@ Then open <http://localhost:4737> and ask, for example, "How do refunds work for
 ```sh
 curl -s -H "Authorization: Bearer $LORE_API_KEY" "http://localhost:4737/api/search?q=refund+delivered+order" | jq '.groups[].results[].slug'
 ```
+
+For a bigger dataset (seven services, releases with diffs, a feature branch) with a local LLM and no API key, see [examples/showcase](examples/showcase/).
 
 `npm run demo` always talks to `LORE_URL` (default `http://localhost:4737`), never to the server stored by `lore login`, so the local `LORE_API_KEY` is not sent elsewhere.
 
