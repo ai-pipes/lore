@@ -24,7 +24,7 @@
     "verify": "npm run typecheck && npm run lint && npm run arch && npm test && npm run build"
   },
   "dependencies": {
-    "@fastify/multipart": "^9.0.3",
+    "@fastify/multipart": "^10.1.6",
     "@highlightjs/cdn-assets": "^11.12.0",
     "@modelcontextprotocol/sdk": "^1.10.2",
     "@types/diff": "^7.0.2",
