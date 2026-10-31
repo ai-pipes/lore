@@ -1,0 +1,130 @@
+{
+  "openapi": "3.0.3",
+  "info": { "title": "Petstore API", "version": "1.0.0", "description": "Fictional pet adoption shop used as a Lore generator example." },
+  "paths": {
+    "/api/v1/pets": {
+      "get": {
+        "tags": ["pets"],
+        "operationId": "listPets",
+        "summary": "List pets in the catalogue",
+        "parameters": [
+          { "name": "species", "in": "query", "schema": { "type": "string", "enum": ["dog", "cat", "bird", "fish", "reptile"] } },
+          { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["available", "reserved", "adopted"], "default": "available" } },
+          { "name": "page_size", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 20 } }
+        ],
+        "responses": {
+          "200": { "description": "A page of pets", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PetPage" } } } },
+          "400": { "description": "Invalid filter" }
+        }
+      },
+      "post": {
+        "tags": ["pets"],
+        "operationId": "createPet",
+        "summary": "Add a pet to the catalogue (staff only)",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/NewPet" } } } },
+        "responses": {
+          "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Pet" } } } },
+          "400": { "description": "Validation failed" },
+          "403": { "description": "Caller is not staff" }
+        }
+      }
+    },
+    "/api/v1/pets/{petId}": {
+      "get": {
+        "tags": ["pets"],
+        "operationId": "getPet",
+        "summary": "Get one pet",
+        "parameters": [{ "name": "petId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "The pet", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Pet" } } } },
+          "404": { "description": "Pet not found" }
+        }
+      }
+    },
+    "/api/v1/orders": {
+      "post": {
+        "tags": ["orders"],
+        "operationId": "placeOrder",
+        "summary": "Place an adoption order for up to 3 pets",
+        "description": "Reserves the pets for 30 minutes and returns a payment link. Publishes order.placed to the petstore.order-events topic.",
+        "parameters": [{ "name": "Idempotency-Key", "in": "header", "required": true, "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/NewOrder" } } } },
+        "responses": {
+          "201": { "description": "Order placed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Order" } } } },
+          "400": { "description": "Invalid request (no pets, more than 3 pets, duplicates)" },
+          "409": { "description": "A pet is not available" }
+        }
+      }
+    },
+    "/api/v1/orders/{orderId}/refund": {
+      "post": {
+        "tags": ["orders"],
+        "operationId": "refundOrder",
+        "summary": "Refund a delivered order within 14 days",
+        "description": "Adoption fees are refunded; the delivery fee is refunded only for reason=health_issue. Asynchronous: the payment gateway confirms later.",
+        "parameters": [{ "name": "orderId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RefundRequest" } } } },
+        "responses": {
+          "202": { "description": "Refund accepted" },
+          "404": { "description": "Order not found" },
+          "409": { "description": "Not delivered, already refunded, or older than 14 days" }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Pet": {
+        "type": "object",
+        "required": ["id", "name", "species", "status", "adoption_fee"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "species": { "type": "string" },
+          "status": { "type": "string", "enum": ["available", "reserved", "adopted"] },
+          "adoption_fee": { "type": "number" },
+          "photo_urls": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "NewPet": {
+        "type": "object",
+        "required": ["name", "species", "adoption_fee"],
+        "properties": {
+          "name": { "type": "string", "maxLength": 60 },
+          "species": { "type": "string" },
+          "adoption_fee": { "type": "number", "minimum": 0, "maximum": 5000 }
+        }
+      },
+      "PetPage": {
+        "type": "object",
+        "properties": { "items": { "type": "array", "items": { "$ref": "#/components/schemas/Pet" } }, "total": { "type": "integer" } }
+      },
+      "NewOrder": {
+        "type": "object",
+        "required": ["pet_ids"],
+        "properties": {
+          "pet_ids": { "type": "array", "minItems": 1, "maxItems": 3, "items": { "type": "string", "format": "uuid" } },
+          "delivery": { "type": "object", "properties": { "address": { "type": "string" }, "date": { "type": "string", "format": "date" } } }
+        }
+      },
+      "Order": {
+        "type": "object",
+        "properties": {
+          "order_id": { "type": "string", "format": "uuid" },
+          "status": { "type": "string" },
+          "total": { "type": "number" },
+          "payment_url": { "type": "string" },
+          "expires_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "RefundRequest": {
+        "type": "object",
+        "required": ["reason"],
+        "properties": {
+          "reason": { "type": "string", "enum": ["pet_returned", "health_issue", "other"] },
+          "comment": { "type": "string", "maxLength": 1000 }
+        }
+      }
+    }
+  }
+}

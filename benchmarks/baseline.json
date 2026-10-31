@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-04-05T13:37:02.295Z",
+  "cloneVersionDocs": {
+    "docCount": 50,
+    "durationMs": 292.162375
+  },
+  "askLore": {
+    "queryCount": 10,
+    "p50Ms": 4.053291000000172,
+    "p95Ms": 6.096957999999859,
+    "meanMs": 4.23832080000002
+  }
+}

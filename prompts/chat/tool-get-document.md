@@ -1,0 +1,1 @@
+Get the full content of a specific document by its slug. Use this only when the user explicitly asks for details, parameters, or the full content of a specific document that is not already in your context.

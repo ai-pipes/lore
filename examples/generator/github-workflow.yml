@@ -1,0 +1,64 @@
+# Example: copy to .github/workflows/lore-docs.yml in a SERVICE repository.
+# On every merge to main it regenerates per-endpoint docs from the OpenAPI
+# spec and pushes them to Lore, versioned by the commit SHA. Pull requests get
+# a dry run (skeletons, no LLM, no push) so the generator is exercised too.
+#
+# Required secrets: LORE_URL, LORE_PROJECT_KEY (a project key lpk_... of the
+# service's namespace, from `lore project-key create`), and optionally LLM_API_KEY (an OpenRouter
+# key by default; set LLM_BASE_URL for another OpenAI-compatible endpoint). Without LLM_API_KEY
+# the generator writes skeleton docs from the spec.
+name: lore-docs
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The generator lives in the Lore repo; check it out next to the service.
+      - uses: actions/checkout@v4
+        with:
+          repository: ai-pipes/lore
+          path: .lore
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm ci
+        working-directory: .lore
+
+      - name: Generate docs (dry run on pull requests)
+        if: github.event_name == 'pull_request'
+        working-directory: .lore
+        run: |
+          npx tsx examples/generator/generate.ts \
+            --spec "$GITHUB_WORKSPACE/openapi.json" \
+            --service "${{ github.event.repository.name }}" \
+            --out "$GITHUB_WORKSPACE/generated-docs" \
+            --dry-run
+
+      - name: Generate and push docs
+        if: github.event_name == 'push'
+        working-directory: .lore
+        env:
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LORE_URL: ${{ secrets.LORE_URL }}
+          LORE_TOKEN: ${{ secrets.LORE_PROJECT_KEY }}
+          GENERATOR_MODEL: openai/gpt-4o-mini
+        run: |
+          npx tsx examples/generator/generate.ts \
+            --spec "$GITHUB_WORKSPACE/openapi.json" \
+            --service "${{ github.event.repository.name }}" \
+            --out "$GITHUB_WORKSPACE/generated-docs" \
+            --source-dir "$GITHUB_WORKSPACE/src" \
+            --version "${{ github.sha }}" \
+            --push

@@ -1,0 +1,1 @@
+Search the documentation of all services (or one library) with automatic keyword extraction. Returns matching documents with a relevance score but without their content; use get_document or ask_lore to read them.

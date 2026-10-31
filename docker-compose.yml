@@ -1,0 +1,76 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_DB: lore
+      POSTGRES_USER: lore
+      POSTGRES_PASSWORD: lore
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lore -d lore"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  lore:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://lore:lore@postgres:5432/lore
+      LORE_API_KEY: ${LORE_API_KEY:?LORE_API_KEY must be set (e.g. in .env, generate with openssl rand -hex 32)}
+      LORE_ADMIN_LOGIN: ${LORE_ADMIN_LOGIN:-}
+      LORE_ADMIN_PASSWORD: ${LORE_ADMIN_PASSWORD:-}
+      LORE_INSIGHTS_LIBRARY: ${LORE_INSIGHTS_LIBRARY:-insights}
+      LORE_COOKIE_SECURE: ${LORE_COOKIE_SECURE:-false}
+      LORE_ALLOWED_ORIGINS: ${LORE_ALLOWED_ORIGINS:-}
+      LORE_TRUST_PROXY: ${LORE_TRUST_PROXY:-}
+      LORE_CLI_TOKEN_TTL_DAYS: ${LORE_CLI_TOKEN_TTL_DAYS:-}
+      LORE_DEVICE_COOKIE_SECRET: ${LORE_DEVICE_COOKIE_SECRET:-}
+      # Single sign-on (README "Single sign-on"): on when OIDC_ISSUER, OIDC_CLIENT_ID and
+      # OIDC_CLIENT_SECRET are all set in .env; empty values mean unset (the defaults apply)
+      PUBLIC_URL: ${PUBLIC_URL:-}
+      OIDC_ISSUER: ${OIDC_ISSUER:-}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
+      OIDC_SCOPES: ${OIDC_SCOPES:-}
+      OIDC_GROUPS_CLAIM: ${OIDC_GROUPS_CLAIM:-}
+      OIDC_LOGIN_GROUP: ${OIDC_LOGIN_GROUP:-}
+      OIDC_ADMIN_GROUP: ${OIDC_ADMIN_GROUP:-}
+      OIDC_ALLOW_INSECURE: ${OIDC_ALLOW_INSECURE:-}
+      LORE_PORT: "4737"
+      LORE_MCP_PORT: "4738"
+      # Inside the container MCP must listen on all interfaces; the port is
+      # only published on the host's loopback below, and Host is still checked.
+      LORE_MCP_HOST: 0.0.0.0
+      LORE_MCP_ALLOWED_HOSTS: localhost:4738,127.0.0.1:4738
+      # The MCP URL shown in the Tokens page's `claude mcp add` command
+      LORE_MCP_PUBLIC_URL: ${LORE_MCP_PUBLIC_URL:-}
+      # hash = offline embeddings; set to openai-compatible (with LORE_EMBEDDING_MODEL and LLM_API_KEY; OpenRouter by default) for semantic search
+      LORE_EMBEDDING_PROVIDER: ${LORE_EMBEDDING_PROVIDER:-hash}
+      LORE_EMBEDDING_BASE_URL: ${LORE_EMBEDDING_BASE_URL:-}
+      LORE_EMBEDDING_API_KEY: ${LORE_EMBEDDING_API_KEY:-}
+      LORE_EMBEDDING_MODEL: ${LORE_EMBEDDING_MODEL:-}
+      # Ollama on the host (localhost inside the container is the container itself)
+      LORE_OLLAMA_URL: ${LORE_OLLAMA_URL:-http://host.docker.internal:11434}
+      LORE_OLLAMA_MODEL: ${LORE_OLLAMA_MODEL:-nomic-embed-text}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      LORE_STORAGE_PATH: /app/storage
+    # lets the container reach a host Ollama on Linux (built in on Docker Desktop)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "127.0.0.1:4737:4737"
+      - "127.0.0.1:4738:4738"
+    volumes:
+      - lore_storage:/app/storage
+
+volumes:
+  postgres_data:
+  lore_storage:
