@@ -1,0 +1,1 @@
+Payment deadline in the order confirmation follows orders-service 7d2e481: unpaid orders are cancelled after 10 minutes instead of 15.
