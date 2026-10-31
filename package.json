@@ -1,6 +1,6 @@
 {
   "name": "lore",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Living documentation for your services: docs rebuilt on every merge, searchable by people (chat with citations) and agents (MCP)",
   "main": "dist/cli.js",
   "bin": {
