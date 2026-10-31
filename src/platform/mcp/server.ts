@@ -6,11 +6,12 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { authenticateBearer, createPgIdentity, type IdentityDeps, type Principal } from '../../modules/identity/index.js';
 import { buildContainer, type Container } from '../container.js';
 import { registerTools } from './tools.js';
+import { LORE_VERSION } from '../version.js';
 
 function createMcpServer(container: Container): McpServer {
   const server = new McpServer({
     name: 'lore',
-    version: '1.0.0',
+    version: LORE_VERSION,
   });
   registerTools(server, container);
   return server;

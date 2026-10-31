@@ -2,13 +2,14 @@ import 'dotenv/config';
 import { Command } from 'commander';
 import { registerClientCommands } from './cli/index.js';
 import { registerServerCommands } from './platform/server-commands.js';
+import { LORE_VERSION } from './platform/version.js';
 
 const program = new Command();
 
 program
   .name('lore')
-  .description('Local AI documentation storage and retrieval service')
-  .version('1.0.0');
+  .description('Living documentation for your services: push docs from CI, search and chat with citations, MCP')
+  .version(LORE_VERSION);
 
 // `lore --help` lists the client commands (login, logout, whoami, push, images, namespace,
 // project-key), then the server commands (serve, mcp, status, link-sso, unlink-sso).
