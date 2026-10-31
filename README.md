@@ -53,7 +53,7 @@ API clients send `Authorization: Bearer <token>`: a user's personal `sk_` token,
 
 Compose refuses to start without `LORE_API_KEY`, and the server (which runs with `NODE_ENV=production` in the image) rejects well-known defaults such as `changeme` and keys shorter than 24 characters. Load the key into your shell for the commands below: `export $(grep ^LORE_API_KEY= .env)`.
 
-Compose builds the image from source; to run a released image instead, put `image: ghcr.io/ai-pipes/lore:1` in place of `build: .` (see [Released images](#released-images)). Compose runs Lore and `pgvector/pgvector:pg17`. Migrations run on startup. Ports are published on `127.0.0.1` only: `4737` (HTTP API + chat UI), `4738` (MCP), `5433` (Postgres). Embeddings default to the offline `hash` provider; set `LORE_EMBEDDING_PROVIDER=openai-compatible` together with `LORE_EMBEDDING_MODEL` and `LLM_API_KEY` (OpenRouter by default) for semantic search. For a fully local setup point `LLM_BASE_URL` at the host's Ollama (`http://host.docker.internal:11434/v1`, plus `LLM_MODEL`) and use `LORE_EMBEDDING_PROVIDER=ollama`; from inside Compose `localhost` is the container itself, so Compose passes `LORE_OLLAMA_URL=http://host.docker.internal:11434` and `LORE_OLLAMA_MODEL=nomic-embed-text` by default (the Compose file maps `host.docker.internal` to the host on Linux too). To switch embedding models later, see [Changing the embedding model](#changing-the-embedding-model).
+Compose builds the image from source; to run a released image instead, put `image: ghcr.io/ai-pipes/lore:0.2` in place of `build: .` (see [Released images](#released-images)). Compose runs Lore and `pgvector/pgvector:pg17`. Migrations run on startup. Ports are published on `127.0.0.1` only: `4737` (HTTP API + chat UI), `4738` (MCP), `5433` (Postgres). Embeddings default to the offline `hash` provider; set `LORE_EMBEDDING_PROVIDER=openai-compatible` together with `LORE_EMBEDDING_MODEL` and `LLM_API_KEY` (OpenRouter by default) for semantic search. For a fully local setup point `LLM_BASE_URL` at the host's Ollama (`http://host.docker.internal:11434/v1`, plus `LLM_MODEL`) and use `LORE_EMBEDDING_PROVIDER=ollama`; from inside Compose `localhost` is the container itself, so Compose passes `LORE_OLLAMA_URL=http://host.docker.internal:11434` and `LORE_OLLAMA_MODEL=nomic-embed-text` by default (the Compose file maps `host.docker.internal` to the host on Linux too). To switch embedding models later, see [Changing the embedding model](#changing-the-embedding-model).
 
 ## Demo
 
@@ -206,7 +206,7 @@ jobs:
           LORE_TOKEN: ${{ secrets.LORE_PROJECT_KEY }}
         run: |
           docker run --rm -v "$PWD/docs:/docs:ro" -e LORE_URL -e LORE_TOKEN \
-            ghcr.io/ai-pipes/lore:1 \
+            ghcr.io/ai-pipes/lore:0.2 \
             node dist/cli.js push /docs -l orders-api -v "${{ github.sha }}" -b "${{ github.ref_name }}"
 ```
 
@@ -470,7 +470,7 @@ Please report vulnerabilities privately via GitHub security advisories of this r
 
 ## Released images
 
-Tagged releases (`vX.Y.Z`) publish a multi-arch image (linux/amd64, linux/arm64) to `ghcr.io/ai-pipes/lore` with tags `X.Y.Z`, `X.Y` and `X`.
+Tagged releases (`vX.Y.Z`) publish a multi-arch image (linux/amd64, linux/arm64) to `ghcr.io/ai-pipes/lore` with tags `X.Y.Z`, `X.Y` and `X`. While Lore is at 0.x, a minor release may break configuration (see the release notes), so pin `X.Y` (for example `0.2`) rather than `X` or `latest`.
 
 ```sh
 docker run -d --name lore -p 127.0.0.1:4737:4737 -p 127.0.0.1:4738:4738 \
@@ -479,10 +479,10 @@ docker run -d --name lore -p 127.0.0.1:4737:4737 -p 127.0.0.1:4738:4738 \
   -e LORE_PORT=4737 -e LORE_MCP_PORT=4738 -e LORE_MCP_HOST=0.0.0.0 \
   -e LORE_MCP_ALLOWED_HOSTS=localhost:4738,127.0.0.1:4738 \
   -e LORE_EMBEDDING_PROVIDER=hash -v lore_storage:/app/storage \
-  ghcr.io/ai-pipes/lore:1
+  ghcr.io/ai-pipes/lore:0.2
 ```
 
-The image contains the CLI too: `docker run --rm ghcr.io/ai-pipes/lore:1 node dist/cli.js --help`.
+The image contains the CLI too: `docker run --rm ghcr.io/ai-pipes/lore:0.2 node dist/cli.js --help`.
 
 ## Development
 
