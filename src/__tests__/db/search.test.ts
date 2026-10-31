@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { and, eq, sql } from 'drizzle-orm';
 import { versionCondition } from '../../modules/catalog/infrastructure/version-filter.js';
-import { searchDocs, findByAnyMetadataKey, FIND_BY_METADATA_LIMIT, getLibraryOverview, vectorSearch } from '../../modules/catalog/infrastructure/pg-document-search.js';
+import { searchDocs, findByAnyMetadataKey, FIND_BY_METADATA_LIMIT, getLibraryOverview, listServices, vectorSearch } from '../../modules/catalog/infrastructure/pg-document-search.js';
 import { getDocumentBySlug, insertDocument, insertDocumentBatch } from '../../modules/catalog/infrastructure/pg-documents.js';
 import { createVersion } from '../../modules/catalog/infrastructure/pg-versions.js';
 import { getEmbeddingProvider } from '../../modules/catalog/infrastructure/embeddings/EmbeddingProvider.js';
@@ -207,5 +207,38 @@ describe('branch filter resolves to the newest version of the branch', () => {
     await pushBranch('other-lib', 'c2', 'c1'); // the head here is c1, by pushed_at
     const results = await searchDocs({ query: 'widget', branch: 'feat' });
     expect(results.map((r) => `${r.library_id}/${r.slug}/${r.summary}`).sort()).toEqual(['other-lib/a/NEW', 'test-lib/a/NEW']);
+  });
+});
+
+describe('listServices', () => {
+  // The chat scope selector lists these and sends the ids as library_ids, so they are libraries, not domains
+  it('lists libraries with their display name and document count in the current version', async () => {
+    await createTestLibrary('orders-service', 'Orders Service');
+    await createTestVersion('orders-service', 'o1');
+    await createTestLibrary('empty-lib', 'Empty');
+    await createTestVersion('empty-lib', 'e1');
+    await insertDocument({ library_id: 'test-lib', version_id: 'v1', slug: 'a', content: 'a', domain: 'billing' });
+    await insertDocument({ library_id: 'test-lib', version_id: 'v1', slug: 'b', content: 'b', domain: 'orders' });
+    await insertDocument({ library_id: 'test-lib', version_id: 'v1', slug: 'c', content: 'c' });
+    await insertDocument({ library_id: 'orders-service', version_id: 'o1', slug: 'x', content: 'x', domain: 'orders' });
+
+    expect(await listServices()).toEqual([
+      { id: 'test-lib', display_name: 'Test Library', doc_count: 3 },
+      { id: 'orders-service', display_name: 'Orders Service', doc_count: 1 },
+    ]);
+    expect(await listServices('orders-service')).toEqual([
+      { id: 'orders-service', display_name: 'Orders Service', doc_count: 1 },
+    ]);
+  });
+
+  it('counts the documents of the requested branch head', async () => {
+    await createVersion('f1', 'test-lib', 'feature/x');
+    await insertDocument({ library_id: 'test-lib', version_id: 'v1', slug: 'a', content: 'a' });
+    await insertDocument({ library_id: 'test-lib', version_id: 'f1', slug: 'a', content: 'a' });
+    await insertDocument({ library_id: 'test-lib', version_id: 'f1', slug: 'b', content: 'b' });
+
+    expect(await listServices(undefined, { branch: 'feature/x' })).toEqual([
+      { id: 'test-lib', display_name: 'Test Library', doc_count: 2 },
+    ]);
   });
 });

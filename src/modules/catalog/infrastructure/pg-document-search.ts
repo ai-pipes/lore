@@ -16,7 +16,7 @@ import type {
 } from '../domain/document.js';
 import type { DocumentSearch } from '../application/ports.js';
 import { getEmbeddingProvider } from './embeddings/EmbeddingProvider.js';
-import { documents, document_links, document_metadata, document_vectors, versions } from './schema.js';
+import { documents, document_links, document_metadata, document_vectors, libraries, versions } from './schema.js';
 import { versionCondition } from './version-filter.js';
 import { findRelatedDocs, inferRelatedDocs } from './pg-relationships.js';
 
@@ -126,33 +126,28 @@ export async function getLibraryOverview(library_id: string, filter: VersionFilt
     .orderBy(documents.domain, documents.entry_type);
 }
 
+/**
+ * The services of the chat scope selector: one entry per library with documents in the
+ * requested version (current by default), with its document count. The selector sends the
+ * ids as `library_ids`, so they must be library ids, not document domains.
+ */
 export async function listServices(library_id?: string, filter: VersionFilter = {}): Promise<ServiceInfo[]> {
   const db = getDb();
-  const verCond = versionCondition(filter);
-  const conditions = [verCond];
+  const conditions = [versionCondition(filter)];
   if (library_id) conditions.push(eq(documents.library_id, library_id));
 
-  const rows = await db
-    .select({
-      domain: documents.domain,
-      count: sql<number>`cast(count(*) as int)`,
-    })
+  const count = sql<number>`cast(count(*) as int)`;
+  return db
+    .select({ id: libraries.id, display_name: libraries.display_name, doc_count: count })
     .from(documents)
     .innerJoin(
       versions,
       and(eq(versions.id, documents.version_id), eq(versions.library_id, documents.library_id)),
     )
+    .innerJoin(libraries, eq(libraries.id, documents.library_id))
     .where(and(...conditions))
-    .groupBy(documents.domain)
-    .orderBy(sql`count(*) DESC`);
-
-  return rows
-    .filter(r => r.domain != null)
-    .map(r => ({
-      id: r.domain!,
-      display_name: r.domain!.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
-      doc_count: r.count,
-    }));
+    .groupBy(libraries.id, libraries.display_name)
+    .orderBy(sql`count(*) DESC`, libraries.id);
 }
 
 export async function getCategoryStats(library_id: string, filter: VersionFilter = {}): Promise<CategoryStat[]> {
