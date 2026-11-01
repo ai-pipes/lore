@@ -36,6 +36,7 @@ describe('llm term extractor', () => {
         { role: 'user', content: 'заказ возврат' },
       ],
       maxTokens: 50,
+      temperature: 0,
       maxRetries: 0,
       timeoutMs: 5_000,
     });

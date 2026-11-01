@@ -22,6 +22,16 @@ import { findRelatedDocs, inferRelatedDocs } from './pg-relationships.js';
 
 export type { CategoryStat, DomainStat, LinkedDoc, SearchOptions, SearchResult, ServiceInfo, VectorSearchResult };
 
+/**
+ * Full-text rank of a document for a web-search query, divided by 1 + log(document length)
+ * (normalization 1), so a long page that repeats a common word does not outrank the short page
+ * that is about the query. (Weighting slug and summary over the body was measured too and ranked
+ * overview pages too high.)
+ */
+function ftsRank(query: string) {
+  return sql`ts_rank("documents"."search_vector", websearch_to_tsquery('english', ${query}), 1)`;
+}
+
 export async function searchDocs(opts: SearchOptions): Promise<SearchResult[]> {
   const db = getDb();
   const verCond = versionCondition(opts);
@@ -36,7 +46,7 @@ export async function searchDocs(opts: SearchOptions): Promise<SearchResult[]> {
   if (opts.category) conditions.push(eq(documents.category, opts.category));
   if (opts.minScore) {
     conditions.push(
-      sql`ts_rank("documents"."search_vector", websearch_to_tsquery('english', ${opts.query})) >= ${opts.minScore}`,
+      sql`${ftsRank(opts.query)} >= ${opts.minScore}`,
     );
   }
 
@@ -49,7 +59,7 @@ export async function searchDocs(opts: SearchOptions): Promise<SearchResult[]> {
       http_method: documents.http_method,
       route: documents.route,
       summary: documents.summary,
-      score: sql<number>`ts_rank("documents"."search_vector", websearch_to_tsquery('english', ${opts.query}))`,
+      score: sql<number>`${ftsRank(opts.query)}`,
     })
     .from(documents)
     .innerJoin(
@@ -57,7 +67,7 @@ export async function searchDocs(opts: SearchOptions): Promise<SearchResult[]> {
       and(eq(versions.id, documents.version_id), eq(versions.library_id, documents.library_id)),
     )
     .where(and(...conditions))
-    .orderBy(sql`ts_rank("documents"."search_vector", websearch_to_tsquery('english', ${opts.query})) DESC`)
+    .orderBy(sql`${ftsRank(opts.query)} DESC`)
     .limit(opts.limit ?? 20);
 
   return rows;

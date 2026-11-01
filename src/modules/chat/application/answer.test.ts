@@ -80,7 +80,7 @@ describe('streamChat, regular mode', () => {
     }
     const context = req.messages[2].content as string;
     expect(context).toContain('## Relevant documentation');
-    expect(context).toContain('- **orders.refund** (endpoint POST /refunds): about orders/refund [library_id: orders, slug: orders/refund]');
+    expect(context).toContain('- **orders.refund** (endpoint POST /refunds): about orders/refund [ref:orders/orders/refund]');
     expect(context).toContain('## Related documentation (via links)');
     expect(context).toContain('← references from orders.refund');
     expect(context).toContain('/static/libraries/orders/versions/v1/images/orders/refund/a.png');
@@ -265,7 +265,7 @@ describe('streamChat, pinned documents', () => {
       content: JSON.stringify({ library_id: 'orders', slug: 'orders/refund', summary: 'summary of orders/refund', content: 'Pinned body' }),
     });
     const pinned = state.streamCalls[1].messages.find((m) => m.role === 'system' && String(m.content).startsWith('## Pinned'))!;
-    expect(pinned.content).toBe('## Pinned documentation\n\n### orders.refund [library_id: orders, slug: orders/refund]\n\nPinned body');
+    expect(pinned.content).toBe('## Pinned documentation\n\n### orders.refund [ref:orders/orders/refund]\n\nPinned body');
   });
 
   it('says so when no pinned document exists', async () => {

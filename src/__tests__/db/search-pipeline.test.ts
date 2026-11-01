@@ -103,6 +103,17 @@ describe('searchDocuments — with services list', () => {
     expect(results.some((r) => r.library_id === 'service-b')).toBe(false);
   });
 
+  it('returns [] for a service that does not exist', async () => {
+    await insertDocument({ library_id: 'service-a', version_id: 'v1', slug: 'a/transfer', content: 'Internal inventory transfer.', summary: 'Transfer A' });
+
+    llmReturns('internal transfer');
+    const results = await searchDocuments(search, 'transfer', {
+      services: [{ library_id: 'nonexistent-library' }],
+    });
+
+    expect(results).toEqual([]);
+  });
+
   it('merges and sorts results across multiple services', async () => {
     await insertDocument({ library_id: 'service-a', version_id: 'v1', slug: 'a/high', content: 'Transfer transfer transfer.', summary: 'High score A' });
     await insertDocument({ library_id: 'service-b', version_id: 'v1', slug: 'b/low', content: 'One transfer here.', summary: 'Low score B' });

@@ -24,8 +24,8 @@ export default defineConfig({
       thresholds: { lines: 90, branches: 90, functions: 90, statements: 90 },
     },
     fileParallelism: false,
-    include: ['src/**/*.test.ts', 'test/**/*.test.ts'],
-    exclude: ['**/node_modules/**', 'src/__tests__/quality/**', 'e2e/**', 'test/architecture/fixtures/**'],
+    include: ['src/**/*.test.ts', 'test/**/*.test.ts', 'eval/**/*.test.ts'],
+    exclude: ['**/node_modules/**', 'e2e/**', 'test/architecture/fixtures/**'],
     env: {
       // Override DATABASE_URL for all test workers — dev DB is never touched
       DATABASE_URL: testUrl,

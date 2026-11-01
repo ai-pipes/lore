@@ -256,7 +256,7 @@ describe('Stream: [ref:...] markers pass through unmodified', () => {
 // ── 4. Context (pinned docs) mode ─────────────────────────────────────────────
 
 describe('Context mode: pinned doc sections include library_id/slug for citations', () => {
-  it('pinned section header contains [library_id: ..., slug: ...] metadata', async () => {
+  it('pinned section header ends with its citation marker [ref:library_id/slug]', async () => {
     let capturedSystemContent = '';
 
     mockStream.mockImplementationOnce(({ messages }: StreamRequest) => {
@@ -277,8 +277,9 @@ describe('Context mode: pinned doc sections include library_id/slug for citation
       },
     });
 
-    // The pinned section header must carry library_id and slug so the model can cite
-    expect(capturedSystemContent).toContain('[library_id: test-lib, slug: store/transfer-create]');
+    // The pinned section header carries the exact marker, so the model copies it instead of composing one
+    expect(capturedSystemContent).toContain('[ref:test-lib/store/transfer-create]');
+    expect(capturedSystemContent).not.toContain('[library_id:');
     expect(capturedSystemContent).toContain('CITATIONS — MANDATORY');
   });
 

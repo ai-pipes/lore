@@ -1,5 +1,5 @@
 import type { Document, VersionFilter } from '../../catalog/index.js';
-import { slugCandidates } from '../domain/query.js';
+import { anyTermQuery, slugCandidates, termsAreTranslated } from '../domain/query.js';
 import type { LinkedHit, SearchDeps, SearchHit, VectorHit } from './ports.js';
 import { rrfFusion } from './ranking.js';
 
@@ -74,7 +74,7 @@ function serviceVersionFilter(svc: ServiceSpec): VersionFilter {
 /**
  * Search pipeline:
  * 1. LLM extracts English keywords from the query (any language in → English terms out)
- * 2. FTS and/or vector search depending on mode
+ * 2. FTS (all terms, else any of them) and/or vector search (embedding of the terms) depending on mode
  * 3. RRF fusion when both result sets are available
  * 4. Results sorted by score descending, low-score noise filtered out
  */
@@ -92,27 +92,38 @@ export async function searchDocuments(d: SearchDeps, query: string, opts: Search
     }
   }
 
-  // Query embedding for hybrid/vector modes (of the original query, not the extracted terms).
-  // null means no embedding provider is configured; then, as after a failed embedding,
+  // FTS first requires all terms; when that finds nothing (one extracted term the documents do
+  // not use, e.g. "cost" for pages that say "fee"), it retries with any of the terms.
+  const anyTerms = anyTermQuery(searchTerms);
+
+  // Query embedding for hybrid/vector modes: of the question, which carries the intent, unless the
+  // extracted terms translate it — then the question is not in English like the documents, and an
+  // English-centric embedding model maps it far from the page that answers it, so the terms are
+  // embedded. null means no embedding provider is configured; then, as after a failed embedding,
   // hybrid falls back to FTS only (drop factor included).
+  const embedText = termsAreTranslated(query, searchTerms) ? searchTerms : query;
   let queryEmbedding: number[] | null = null;
   if (searchMode !== 'fts') {
     try {
-      queryEmbedding = await d.index.embed(query);
+      queryEmbedding = await d.index.embed(embedText);
     } catch {
       queryEmbedding = null;
     }
   }
   const effectiveMode = searchMode === 'vector' ? 'vector' : queryEmbedding ? (searchMode ?? 'hybrid') : 'fts';
 
-  const runFts = async (): Promise<SearchHit[]> => {
+  const ftsOnce = async (q: string): Promise<SearchHit[]> => {
     if (services && services.length > 0) {
       const perService = await Promise.all(
-        services.map((svc) => d.index.fullText(searchTerms, { library_id: svc.library_id, ...serviceVersionFilter(svc), limit: 20 })),
+        services.map((svc) => d.index.fullText(q, { library_id: svc.library_id, ...serviceVersionFilter(svc), limit: 20 })),
       );
       return perService.flat().sort((a, b) => b.score - a.score);
     }
-    return d.index.fullText(searchTerms, { limit: 50 });
+    return d.index.fullText(q, { limit: 50 });
+  };
+  const runFts = async (): Promise<SearchHit[]> => {
+    const all = await ftsOnce(searchTerms);
+    return all.length > 0 || !anyTerms || anyTerms === searchTerms ? all : ftsOnce(anyTerms);
   };
 
   const runVector = async (emb: number[]): Promise<VectorHit[]> => {

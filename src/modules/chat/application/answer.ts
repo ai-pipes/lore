@@ -149,7 +149,7 @@ async function* answerWithPinned(
     const doc = await d.docs.bySlug(pd.library_id, pd.slug, { branch });
     if (doc) {
       const content = rewriteImageUrls(doc.content, pd.library_id, doc.version_id, doc.slug);
-      pinnedSections.push(`### ${displayNameOf(pd.library_id, doc.slug)} [library_id: ${pd.library_id}, slug: ${doc.slug}]\n\n${content}`);
+      pinnedSections.push(`### ${displayNameOf(pd.library_id, doc.slug)} [ref:${pd.library_id}/${doc.slug}]\n\n${content}`);
     }
   }
   const pinnedContext =
@@ -222,7 +222,7 @@ export async function* streamChat(d: ChatDeps, userMessages: LlmMessage[], opts:
     if (llmDocs.length > 0) {
       const lines = llmDocs.map((h) => {
         const meta = [h.entry_type, h.http_method, h.route].filter(Boolean).join(' ');
-        return `- **${displayNameOf(h.library_id, h.slug)}** (${meta}): ${h.summary ?? ''} [library_id: ${h.library_id}, slug: ${h.slug}]`;
+        return `- **${displayNameOf(h.library_id, h.slug)}** (${meta}): ${h.summary ?? ''} [ref:${h.library_id}/${h.slug}]`;
       });
 
       // The full content of the top hits, so the model does not invent details when it skips get_document.
@@ -232,7 +232,7 @@ export async function* streamChat(d: ChatDeps, userMessages: LlmMessage[], opts:
           const doc = await d.docs.bySlug(h.library_id, h.slug, { branch });
           if (doc) {
             const content = rewriteImageUrls(doc.content, h.library_id, doc.version_id, h.slug);
-            autoFetched.push(`### ${displayNameOf(h.library_id, h.slug)} [library_id: ${h.library_id}, slug: ${h.slug}]\n\n${content}`);
+            autoFetched.push(`### ${displayNameOf(h.library_id, h.slug)} [ref:${h.library_id}/${h.slug}]\n\n${content}`);
             autoFetchedSources.push({ library_id: h.library_id, slug: h.slug });
           } else {
             console.warn('[auto-fetch] document not found:', h.library_id, h.slug);
@@ -249,7 +249,7 @@ export async function* streamChat(d: ChatDeps, userMessages: LlmMessage[], opts:
         if (linked.length > 0) {
           const relatedLines = linked.map((ld) => {
             const meta = [ld.entry_type, ld.http_method, ld.route].filter(Boolean).join(' ');
-            return `- **${displayNameOf(ld.library_id, ld.slug)}** (${meta}): ${ld.summary ?? ''} ← ${ld.link_type} from ${displayNameOf(ld.library_id, ld.from_slug)} [library_id: ${ld.library_id}, slug: ${ld.slug}]`;
+            return `- **${displayNameOf(ld.library_id, ld.slug)}** (${meta}): ${ld.summary ?? ''} ← ${ld.link_type} from ${displayNameOf(ld.library_id, ld.from_slug)} [ref:${ld.library_id}/${ld.slug}]`;
           });
           relatedSection = `\n\n## Related documentation (via links)\n\n${relatedLines.join('\n')}`;
         }

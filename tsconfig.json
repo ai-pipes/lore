@@ -11,5 +11,5 @@
     "resolveJsonModule": true,
     "types": ["vitest/globals"]
   },
-  "include": ["src", "scripts", "examples", "e2e", "test"]
+  "include": ["src", "scripts", "examples", "e2e", "test", "eval"]
 }

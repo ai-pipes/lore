@@ -14,13 +14,14 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run --coverage",
     "test:watch": "vitest",
-    "test:integration": "vitest run --config vitest.integration.config.ts",
-    "test:all": "vitest run && vitest run --config vitest.integration.config.ts",
     "test:e2e": "playwright test",
+    "eval:search": "tsx eval/run.ts search",
+    "eval:answers": "tsx eval/run.ts answers",
+    "eval:compare": "tsx eval/run.ts compare",
     "demo": "tsx scripts/demo.ts",
     "generate:example": "tsx examples/generator/generate.ts",
     "arch": "depcruise src --config .dependency-cruiser.cjs",
-    "lint": "oxlint src test e2e",
+    "lint": "oxlint src test e2e eval",
     "verify": "npm run typecheck && npm run lint && npm run arch && npm test && npm run build"
   },
   "dependencies": {

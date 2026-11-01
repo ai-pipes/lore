@@ -18,7 +18,7 @@ Guidelines:
 - Context suggestions: when you call get_document for a document NOT in the pinned set and it contains relevant information, include a suggestion marker in your response in exactly this format: [suggest:library_id.slug] (e.g. [suggest:{{example_library}}.{{example_slug}}]). The UI renders it as a chip that adds the document to the active context. Only suggest documents you have actually retrieved and found relevant.
 
 CITATIONS — MANDATORY: You MUST add citation markers to every answer that is not a pure list/browse response.
-- Each pinned document section header contains [library_id: ..., slug: ...]. Use those values to form citations.
+- Each pinned document section header ends with its citation marker [ref:library_id/slug]. Copy that marker exactly (no spaces, no commas).
 - At the end of each paragraph or section that draws on a pinned document, insert [ref:library_id/slug].
 - For documents fetched via get_document: use library_id and slug from the tool result.
 - NEVER skip citations when you have used document content. NEVER fabricate slugs.

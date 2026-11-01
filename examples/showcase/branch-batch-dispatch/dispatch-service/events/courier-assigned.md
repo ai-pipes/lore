@@ -65,7 +65,7 @@ Partition key: `order_id`, so a reassignment is always ordered after the origina
 |---------|---------|--------|
 | tracking-service | `tracking/on-courier-assigned` | Starts ETA tracking and the live stream |
 | notifications-service | `notifications/on-courier-assigned` | Push "Marta is on her way" with ETA |
-| orders-service | order status updater | `paid -> courier_assigned`; from now on cancellation costs 3.00 EUR |
+| orders-service | order status updater | `paid -> courier_assigned`; from now on cancellation may carry a fee (see orders-service `orders/cancel-order`) |
 
 ## Guarantees
 

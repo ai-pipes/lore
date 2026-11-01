@@ -23,6 +23,8 @@ export function createLlmTermExtractor(model: LanguageModel, opts: { timeoutMs?:
         const answer = await withDeadline(timeoutMs, (signal) => model.complete({
           messages,
           maxTokens: 50,
+          // Deterministic terms: the same question searches the same way every time.
+          temperature: 0,
           timeoutMs,
           maxRetries: 0,
           signal,
