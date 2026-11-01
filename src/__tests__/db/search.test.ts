@@ -49,6 +49,27 @@ describe('searchDocs (FTS)', () => {
     expect(results).toHaveLength(0);
   });
 
+  it('minScore drops hits below the threshold', async () => {
+    await insertDocument({ library_id: 'test-lib', version_id: 'v1', slug: 'api/high', content: 'payment payment payment refunds.' });
+    await insertDocument({ library_id: 'test-lib', version_id: 'v1', slug: 'api/low', content: 'One payment among many unrelated words about shipping, tracking, delivery and warehouses.' });
+
+    const all = await searchDocs({ query: 'payment', library_id: 'test-lib', minScore: 0 });
+    expect(all).toHaveLength(2);
+    const scores = all.map((r) => r.score);
+    const top = Math.max(...scores);
+    const bottom = Math.min(...scores);
+    expect(bottom).toBeLessThan(top);
+
+    expect(await searchDocs({ query: 'payment', library_id: 'test-lib', minScore: top + 0.001 })).toEqual([]);
+
+    const mid = (top + bottom) / 2;
+    const some = await searchDocs({ query: 'payment', library_id: 'test-lib', minScore: mid });
+    expect(some.length).toBeGreaterThan(0);
+    expect(some.length).toBeLessThan(all.length);
+    expect(some.every((r) => r.score >= mid)).toBe(true);
+    expect(some.map((r) => r.slug)).toEqual(['api/high']);
+  });
+
   it('filters by domain', async () => {
     await insertDocument({ library_id: 'test-lib', version_id: 'v1', slug: 'a', content: 'invoice payment', domain: 'billing' });
     await insertDocument({ library_id: 'test-lib', version_id: 'v1', slug: 'b', content: 'invoice payment', domain: 'orders' });

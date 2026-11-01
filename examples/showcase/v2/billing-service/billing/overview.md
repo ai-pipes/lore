@@ -94,7 +94,7 @@ sequenceDiagram
 
 - Currency is always **EUR**; amounts are stored as integer cents (`amount_cents`).
 - Valid delivery prices are between **4.90 EUR** (base price, 0 km) and **37.35 EUR** (25 km with x1.5 surge: (4.90 + 25 x 0.80) x 1.5). Anything outside is rejected as a pricing bug.
-- An optional **tip** (0.50–20.00 EUR, from `order.created`) is captured together with the delivery price in the same intent, so the maximum intent is 57.35 EUR. The tip is paid out in full to the courier who delivers the order.
+- An optional **tip** (0.00–20.00 EUR, from `order.created`) is captured together with the delivery price in the same intent, so the maximum intent is 57.35 EUR. The tip is paid out in full to the courier who delivers the order.
 - A payment intent expires **10 minutes** after the order was created, in sync with `jobs/expire-unpaid-orders` in orders-service.
 - Cancellation before a courier is assigned is **free**: an uncaptured intent is voided, a captured one is fully refunded.
 - Cancellation after courier assignment costs **3.50 EUR**, except within **2 minutes** after the first assignment, which is still free; the fee and refund amount come from orders-service in `order.cancelled`. The tip is refunded with it.

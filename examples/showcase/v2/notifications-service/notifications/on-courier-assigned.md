@@ -66,7 +66,7 @@ from push to SMS.
 
 5. The push opens the live tracking screen (`parcelly://orders/{order_id}/track`). If no device receipt arrives within
    60 s, the SMS is sent with a short link to the web tracking page.
-6. The message reminds the customer that cancelling from now on costs a **3.00 EUR** cancellation fee
+6. The message reminds the customer that cancelling more than 2 minutes after the first assignment costs a **3.50 EUR** cancellation fee
    (`orders/cancel-order`); it is shown only for `attempt = 1`.
 
 Example (`en`, push): title "Anna is on the way", body "Pickup around 14:32. Track your parcel live."

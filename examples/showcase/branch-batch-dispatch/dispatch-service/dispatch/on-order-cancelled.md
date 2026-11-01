@@ -41,12 +41,12 @@ Orders with `previous_status = created` were never paid and have no assignment.
    |--------|--------|
    | `searching` | Set `cancelled`; the assignment loop stops |
    | `offered` | Withdraw the pending offer in table: courier_offers (courier app shows "Order cancelled"), set `cancelled` |
-   | `accepted` | Set `cancelled`, free the courier, push "Order cancelled — you will receive the 3.00 EUR cancellation fee" via service: courier-app-push |
+   | `accepted` | Set `cancelled`, free the courier, push "Order cancelled — you will receive the cancellation fee" via service: courier-app-push |
    | `picked_up`, `delivered` | Should not happen (orders-service returns `409`); log `cancel_after_pickup` and alert |
    | `cancelled` | Replay, no-op |
 
 3. Publish nothing: `order.cancelled` already tells tracking-service and notifications-service.
-4. The 3.00 EUR fee billing withholds after assignment is credited to the released courier in the weekly payout (`assignments.cancellation_fee_cents` = `cancellation_fee` from the event; `0` when `fee_waived`).
+4. The cancellation fee billing withholds after assignment (amount set by orders-service `orders/cancel-order`) is credited to the released courier in the weekly payout (`assignments.cancellation_fee_cents` = `cancellation_fee` from the event; `0` when `fee_waived`).
 
 ## External Dependencies
 

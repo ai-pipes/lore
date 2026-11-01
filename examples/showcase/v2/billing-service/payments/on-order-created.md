@@ -37,7 +37,7 @@ Event payload as described in orders-service `events/order-created`:
 | `order_id` | uuid (v7) | Idempotency and `payments.order_id` |
 | `customer_id` | uuid (v7) | Paylane customer lookup |
 | `delivery_price` | decimal (EUR) | Delivery price |
-| `tip` | decimal (EUR), optional | Courier tip, 0.50–20.00; absent or `0` means no tip |
+| `tip` | decimal (EUR), optional | Courier tip, 0.00–20.00; absent or `0` means no tip |
 | `price.currency` | string | Must be `EUR` |
 | `created_at` | timestamp | Intent expiry = `created_at + 10 min` |
 | `payment_method_id` | string, optional | Saved Paylane payment method |
@@ -46,7 +46,7 @@ Event payload as described in orders-service `events/order-created`:
 
 1. Skip events whose `created_at` is more than 10 minutes old: the order is already expired by `jobs/expire-unpaid-orders`.
 2. Look up table: payments by `order_id`. If a row exists, the event is a replay — re-send the existing `client_secret` (step 6) and stop.
-3. Validate the amount: currency `EUR`, `delivery_price` between 4.90 and 37.35 EUR, tip between 0.50 and 20.00 EUR if present. Out-of-range values go to queue: `billing.dead-letter` with reason `price_out_of_range` and page the billing on-call.
+3. Validate the amount: currency `EUR`, `delivery_price` between 4.90 and 37.35 EUR, tip between 0.00 and 20.00 EUR if present. Out-of-range values go to queue: `billing.dead-letter` with reason `price_out_of_range` and page the billing on-call.
 4. Convert to integer cents and create the intent: `POST /v2/payment_intents` with `amount = delivery_price + tip`, `currency=eur`, `capture_method=manual`, `metadata.order_id`, `expires_at = created_at + 10 min`. The Paylane `Idempotency-Key` is `intent:{order_id}`.
 5. Insert a `payments` row with `status = requires_authorization`, `psp_intent_id`, `amount_cents` (delivery price), `tip_cents`, `expires_at`.
 6. Hand the `client_secret` to orders-service (`PUT /internal/orders/{order_id}/payment`), which returns it in `orders/get-order` to the checkout screen.

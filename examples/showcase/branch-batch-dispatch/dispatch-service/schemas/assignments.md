@@ -42,7 +42,7 @@ Dispatch's Postgres tables (PostGIS enabled). UUID v7 ids, `timestamptz` in UTC.
 | `reassignment_of` | uuid | yes | Previous assignment |
 | `reassign_reason` | text | yes | |
 | `auto_reassign_count` | smallint | no | Max 2 |
-| `cancellation_fee_cents` | integer | no | `300` when cancelled after acceptance, else `0` |
+| `cancellation_fee_cents` | integer | no | The `cancellation_fee` of order.cancelled in cents (set by orders-service, see `orders/cancel-order`) when cancelled after acceptance, else `0` |
 | `created_at`, `updated_at` | timestamptz | no | |
 
 Statuses: `searching -> offered -> accepted -> picked_up -> delivered`; side exits `cancelled`, `reassigned`.
