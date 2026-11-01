@@ -37,6 +37,27 @@ describe('searchDocs (FTS)', () => {
     expect(results[0].slug).toBe('api/payment');
   });
 
+  it('ranks the page whose slug and summary name the terms above a long page that only mentions them', async () => {
+    const filler = 'The delivery is confirmed and the delivery status is stored for the delivery record. '.repeat(40);
+    await insertDocument({
+      library_id: 'test-lib',
+      version_id: 'v1',
+      slug: 'notifications/on-delivery-completed',
+      content: `${filler} The e-mail shows the estimated time of the next delivery. ${filler}`,
+      summary: 'Sends the delivery completed e-mail',
+    });
+    await insertDocument({
+      library_id: 'test-lib',
+      version_id: 'v1',
+      slug: 'tracking/get-eta',
+      content: 'GET /api/v1/orders/{order_id}/eta returns the estimate for an order.',
+      summary: 'Returns the estimated delivery time of an order',
+    });
+
+    const results = await searchDocs({ query: 'estimated delivery time', library_id: 'test-lib' });
+    expect(results.map((r) => r.slug)).toEqual(['tracking/get-eta', 'notifications/on-delivery-completed']);
+  });
+
   it('returns empty array for no matches', async () => {
     await insertDocument({
       library_id: 'test-lib',

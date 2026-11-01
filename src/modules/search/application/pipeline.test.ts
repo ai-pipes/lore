@@ -112,11 +112,42 @@ describe('searchDocuments', () => {
     expect(index.ftsCalls[0]).toEqual({ query: 'q', limit: 50 });
   });
 
-  it('uses the extracted terms for FTS and the original query for the embedding', async () => {
+  it('embeds the translated terms when the question is in another language', async () => {
     const index = fakeIndex({ fts: () => transfers, embedding: [1, 0] });
     await searchDocuments(deps(index, async () => 'inventory transfer'), '¿transferencias?');
-    expect(index.ftsCalls[0].query).toBe('inventory transfer');
-    expect(index.embedCalls).toEqual(['¿transferencias?']);
+    expect(index.ftsCalls.map((c) => c.query)).toEqual(['inventory transfer']);
+    expect(index.embedCalls).toEqual(['inventory transfer']);
+  });
+
+  it('embeds the question when the terms are taken from it', async () => {
+    const index = fakeIndex({ fts: () => transfers, embedding: [1, 0] });
+    await searchDocuments(deps(index, async () => 'inventory transfer'), 'How do I make an inventory transfer?');
+    expect(index.embedCalls).toEqual(['How do I make an inventory transfer?']);
+  });
+
+  it('retries FTS with any of the terms when all of them together match nothing', async () => {
+    const index = fakeIndex({ fts: (q) => (q.query.includes(' or ') ? transfers : []) });
+    const results = await searchDocuments(deps(index, async () => 'cancellation cost'), 'q', { dropFactor: 0 });
+    expect(index.ftsCalls.map((c) => c.query)).toEqual(['cancellation cost', 'cancellation or cost']);
+    expect(results).toHaveLength(3);
+  });
+
+  it('does not retry FTS for a single term or when all terms matched', async () => {
+    const single = fakeIndex({ fts: () => [] });
+    await searchDocuments(deps(single, async () => 'refund'), 'q');
+    expect(single.ftsCalls.map((c) => c.query)).toEqual(['refund']);
+    const matched = fakeIndex({ fts: () => transfers });
+    await searchDocuments(deps(matched, async () => 'internal transfer'), 'q');
+    expect(matched.ftsCalls).toHaveLength(1);
+  });
+
+  it('retries per service with the same scope', async () => {
+    const index = fakeIndex({ fts: (q) => (q.query.includes(' or ') ? [hit(q.library_id ?? '', 'x', 1)] : []) });
+    await searchDocuments(deps(index, async () => 'a b'), 'q', { services: [{ library_id: 'svc', branch: 'main' }] });
+    expect(index.ftsCalls).toEqual([
+      { query: 'a b', library_id: 'svc', branch: 'main', limit: 20 },
+      { query: 'a or b', library_id: 'svc', branch: 'main', limit: 20 },
+    ]);
   });
 
   it('falls back to the query when term extraction throws, and skips it given pre-extracted terms', async () => {
