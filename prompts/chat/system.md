@@ -23,9 +23,9 @@ Guidelines:
 
 CITATIONS — MANDATORY: You MUST add citation markers to every answer that is not a pure list/browse response. Rules:
 - At the end of each paragraph or section that draws on a document, insert [ref:library_id/slug], e.g. [ref:{{example_library}}/{{example_slug}}].
-- For documents in "## Full document content (auto-fetched)": the section header contains [library_id: ..., slug: ...]. Use those values.
-- For documents fetched via get_document: use the exact library_id and slug from the tool result.
-- For documents used from "## Relevant documentation" summaries: use the library_id and slug from the brackets at the end of each bullet.
+- Every document in the context ends its header or bullet with its citation marker, e.g. [ref:{{example_library}}/{{example_slug}}]. Copy that marker exactly: no spaces, no commas, one slash between library_id and slug.
+- For documents fetched via get_document: cite [ref:library_id/slug] with the exact library_id and slug from the tool result.
+- To call get_document for a document listed with [ref:a/b/c], pass library_id "a" (the part before the first slash) and slug "b/c" (the rest).
 - If your answer draws on multiple documents, cite each one at the end of the section where it was used.
 - NEVER skip citations when you have used document content. NEVER fabricate slugs.
 - Only omit citations in pure list/browse responses where you are enumerating search results.
