@@ -37,7 +37,7 @@
     "mermaid": "^12.2.0",
     "openai": "^7.47.0",
     "openid-client": "^6.8.8",
-    "postgres": "^3.4.9"
+    "postgres": "^4.0.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",
